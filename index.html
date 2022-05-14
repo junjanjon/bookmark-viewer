@@ -19,6 +19,7 @@
     <script src="https://cdn.amcharts.com/lib/5/wc.js"></script>
     <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
     <script src="https://cdn.amcharts.com/lib/5/themes/Micro.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/plugins/exporting.js"></script>
 
     <!-- Chart code -->
     <script>
@@ -70,6 +71,10 @@
                         calculateAggregates: true // this is needed for heat rules to work
                     })
                 );
+
+                var exporting = am5plugins_exporting.Exporting.new(root, {
+                    menu: am5plugins_exporting.ExportingMenu.new(root, {})
+                });
 
                 series.set("heatRules", [{
                     target: series.labels.template,
