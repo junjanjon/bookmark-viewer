@@ -15,10 +15,10 @@
     <div id="chartdiv"></div>
 
     <!-- Resources -->
-    <script src="https://cdn.amcharts.com/lib/4/core.js"></script>
-    <script src="https://cdn.amcharts.com/lib/4/charts.js"></script>
-    <script src="https://cdn.amcharts.com/lib/4/plugins/wordCloud.js"></script>
-    <script src="https://cdn.amcharts.com/lib/4/themes/animated.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/index.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/wc.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
+    <script src="https://cdn.amcharts.com/lib/5/themes/Micro.js"></script>
 
     <!-- Chart code -->
     <script>
@@ -53,41 +53,61 @@
             });
 
             return function() {
-                // Themes begin
-                am4core.useTheme(am4themes_animated);
-                // Themes end
+                var root = am5.Root.new("chartdiv");
+                root.setThemes([
+                    am5themes_Animated.new(root),
+                    am5themes_Micro.new(root)
+                ]);
 
-                const chart = am4core.create("chartdiv", am4plugins_wordCloud.WordCloud);
-                const series = chart.series.push(new am4plugins_wordCloud.WordCloudSeries());
-                series.randomness = 0.1;
-                series.rotationThreshold = 0;
+                var series = root.container.children.push(
+                    am5wc.WordCloud.new(root, {
+                        angles: [0],
+                        categoryField: "tag",
+                        valueField: "count",
+                        calculateAggregates: true // this is needed for heat rules to work
+                    })
+                );
 
-                series.data = data;
-                series.dataFields.word = "tag";
-                series.dataFields.value = "count";
+                series.set("heatRules", [{
+                    target: series.labels.template,
+                    dataField: "value",
+                    min: am5.color(0x0000CC),
+                    max: am5.color(0xCC00CC),
+                    key: "fill"
+                }]);
 
-                series.heatRules.push({
-                    "target": series.labels.template,
-                    "property": "fill",
-                    "min": am4core.color("#0000CC"),
-                    "max": am4core.color("#CC00CC"),
-                    "dataField": "value"
+                series.labels.template.set(
+                    "tooltipText",
+                    "{category}: [bold]{value}[/]"
+                );
+
+                // series.labels.template.events.on("pointerover", function (ev) {
+                //     console.log(ev);
+                //     const category = ev.target.dataItem.get("category");
+                //     console.log(category);
+                // });
+
+                // series.labels.template.events.on("pointerout", function (ev) {
+                //     console.log(ev);
+                //     const category = ev.target.dataItem.get("category");
+                //     console.log(category);
+                // });
+
+                series.labels.template.events.on("click", function (ev) {
+                    const category = ev.target.dataItem.get("category");
+                    const url = "https://www.pixiv.net/tags/{word}/artworks".replace("{word}", encodeURIComponent(category));
+                    window.open(url);
                 });
 
-                series.labels.template.url = "https://www.pixiv.net/tags/{word}/artworks";
-                series.labels.template.urlTarget = "_blank";
-                series.labels.template.tooltipText = "{word}: {value}";
-
-                const hoverState = series.labels.template.states.create("hover");
-                hoverState.properties.fill = am4core.color("#FF0000");
-
-                const subtitle = chart.titles.create();
-                subtitle.text = "(click to open)";
-
-                const title = chart.titles.create();
-                title.text = "pixiv ブックマークタグ";
-                title.fontSize = 20;
-                title.fontWeight = "800";
+                series.labels.template.setAll({
+                    paddingTop: 10,
+                    paddingBottom: 10,
+                    paddingLeft: 10,
+                    paddingRight: 10,
+                    fontFamily: "Courier New",
+                    cursorOverStyle: "pointer"
+                });
+                series.data.setAll(data);
             }
         };
         var myRequest = new Request('illust-bookmarks.json');
@@ -99,7 +119,7 @@
         }).then(function(text) {
             var json = JSON.parse(text);
             console.log(json);
-            am4core.ready(launch(json));
+            am5.ready(launch(json));
         });
     </script>
 </body>
